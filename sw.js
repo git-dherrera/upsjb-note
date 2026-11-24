@@ -1,5 +1,5 @@
 // Cambia este número cada vez que publiques una nueva versión de la app.
-const CACHE_NAME = 'upsjb-note-v2';
+const CACHE_NAME = 'upsjb-note-v5';
 
 const APP_SHELL = [
   './',

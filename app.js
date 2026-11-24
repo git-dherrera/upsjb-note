@@ -41,7 +41,6 @@
   // DOM References
   const appShell = document.querySelector('.app-shell');
   const headerTitle = document.getElementById('header-title');
-  const btnBack = document.getElementById('btn-back');
   const navCalculate = document.getElementById('nav-calculate');
   const navSettings = document.getElementById('nav-settings');
   const navSummary = document.getElementById('nav-summary');
@@ -101,6 +100,9 @@
   const toggleAutosave = document.getElementById('toggle-autosave');
   const btnResetDefaults = document.getElementById('btn-reset-defaults');
   const btnSaveSettings = document.getElementById('btn-save-settings');
+  const btnExportBackup = document.getElementById('btn-export-backup');
+  const btnImportBackup = document.getElementById('btn-import-backup');
+  const inputImportBackup = document.getElementById('input-import-backup');
 
   // Summary DOM
   const summaryGpa = document.getElementById('summary-gpa');
@@ -295,7 +297,6 @@
     navCalculate.classList.toggle('active', name === 'calculate');
     navSettings.classList.toggle('active', name === 'settings');
     navSummary.classList.toggle('active', name === 'summary');
-    btnBack.classList.toggle('hidden', name === 'calculate');
 
     if (name === 'calculate') {
       headerTitle.textContent = 'Calcular';
@@ -927,6 +928,145 @@
     showToast(`${GRADE_LABELS[activeSubgradeKey]} actualizada a ${avg.toFixed(2)}.`);
   }
 
+  // ---------- Backup Export / Import ----------
+  function exportBackup() {
+    const payload = {
+      app: 'upsjb-note',
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      settings: state.settings,
+      activeCourseId: state.activeCourseId,
+      courses: state.courses,
+    };
+    const json = JSON.stringify(payload, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const dateStr = new Date().toISOString().slice(0, 10);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `upsjb-note-respaldo-${dateStr}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    showToast('Respaldo .json descargado.');
+  }
+
+  function normalizeImportedState(parsed) {
+    if (!parsed || typeof parsed !== 'object' || !Array.isArray(parsed.courses)) {
+      return null;
+    }
+
+    const baseSettings = structuredClone(DEFAULT_SETTINGS);
+    if (parsed.settings && typeof parsed.settings === 'object') {
+      if (typeof parsed.settings.minGrade === 'number' && parsed.settings.minGrade >= 0 && parsed.settings.minGrade <= 20) {
+        baseSettings.minGrade = round2(parsed.settings.minGrade);
+      }
+      if (typeof parsed.settings.autoSave === 'boolean') {
+        baseSettings.autoSave = parsed.settings.autoSave;
+      }
+      if (parsed.settings.weights && typeof parsed.settings.weights === 'object') {
+        const sum = GRADE_KEYS.reduce((acc, k) => acc + (Number(parsed.settings.weights[k]) || 0), 0);
+        if (sum === 100) {
+          GRADE_KEYS.forEach((k) => {
+            baseSettings.weights[k] = Number(parsed.settings.weights[k]) || 0;
+          });
+        }
+      }
+    }
+
+    const courses = [];
+    parsed.courses.forEach((c, idx) => {
+      if (!c || typeof c !== 'object') return;
+      const id = typeof c.id === 'string' && c.id.trim() ? c.id.trim() : `course_${Date.now()}_${idx}`;
+      const name = typeof c.name === 'string' && c.name.trim() ? c.name.trim() : `Curso ${idx + 1}`;
+      const grades = { pc1: '', pc2: '', pc3: '', pc4: '', ep: '', ef: '' };
+      if (c.grades && typeof c.grades === 'object') {
+        GRADE_KEYS.forEach((k) => {
+          const g = parseGrade(c.grades[k]);
+          grades[k] = g !== null ? String(g) : '';
+        });
+      }
+      let customWeights = null;
+      if (c.customWeights && typeof c.customWeights === 'object') {
+        const cwSum = GRADE_KEYS.reduce((acc, k) => acc + (Number(c.customWeights[k]) || 0), 0);
+        if (cwSum === 100) {
+          customWeights = {};
+          GRADE_KEYS.forEach((k) => {
+            customWeights[k] = Number(c.customWeights[k]) || 0;
+          });
+        }
+      }
+      const subgrades = {};
+      if (c.subgrades && typeof c.subgrades === 'object') {
+        ['pc1', 'pc2', 'pc3', 'pc4'].forEach((k) => {
+          if (Array.isArray(c.subgrades[k])) {
+            subgrades[k] = c.subgrades[k]
+              .map((v) => parseGrade(v))
+              .filter((v) => v !== null)
+              .map(String);
+          }
+        });
+      }
+      courses.push({
+        id,
+        name: id === 'general' ? 'General' : name,
+        grades,
+        generatedKeys: Array.isArray(c.generatedKeys) ? c.generatedKeys.filter((k) => GRADE_KEYS.includes(k)) : [],
+        customWeights,
+        subgrades,
+      });
+    });
+
+    if (!courses.some((c) => c.id === 'general')) {
+      courses.unshift(createEmptyCourse('general', 'General'));
+    }
+
+    const activeCourseId = courses.some((c) => c.id === parsed.activeCourseId) ? parsed.activeCourseId : courses[0].id;
+    return {
+      settings: baseSettings,
+      activeCourseId,
+      courses,
+    };
+  }
+
+  function handleImportFile(file) {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const parsed = JSON.parse(String(reader.result));
+        const nextState = normalizeImportedState(parsed);
+        if (!nextState) {
+          showToast('El archivo no es un respaldo válido de UPSJB Note.');
+          return;
+        }
+        const previousState = structuredClone(state);
+        state = nextState;
+        persistState(true);
+        renderSummary();
+        renderSettings();
+        renderCalculator();
+        const realCount = state.courses.filter((c) => c.id !== 'general').length;
+        showToast(`Respaldo importado (${realCount} curso(s)).`, {
+          actionLabel: 'Deshacer',
+          duration: 6000,
+          onAction: () => {
+            state = previousState;
+            persistState(true);
+            renderSummary();
+            renderSettings();
+            renderCalculator();
+            showToast('Importación revertida.');
+          },
+        });
+      } catch {
+        showToast('No se pudo leer el archivo .json.');
+      }
+    };
+    reader.readAsText(file);
+  }
+
   // ---------- Helpers ----------
   function escapeHtml(str) {
     return str.replace(/[&<>"']/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
@@ -960,7 +1100,6 @@
   }
 
   // ---------- Event Listeners ----------
-  btnBack.addEventListener('click', () => switchView('calculate'));
   navCalculate.addEventListener('click', () => switchView('calculate'));
   navSettings.addEventListener('click', () =>
     switchView(views.settings.classList.contains('active') ? 'calculate' : 'settings')
@@ -1027,6 +1166,16 @@
     state.settings.autoSave = toggleAutosave.checked;
     persistState(true);
     showToast(toggleAutosave.checked ? 'Guardado automático activado.' : 'Guardado automático desactivado.');
+  });
+
+  btnExportBackup.addEventListener('click', exportBackup);
+  btnImportBackup.addEventListener('click', () => {
+    inputImportBackup.value = '';
+    inputImportBackup.click();
+  });
+  inputImportBackup.addEventListener('change', (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (file) handleImportFile(file);
   });
 
   btnAddCourse.addEventListener('click', addCourse);

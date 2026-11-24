@@ -25,11 +25,6 @@
     <!-- App Header -->
     <header class="app-header">
       <div class="header-left">
-        <button type="button" id="btn-back" class="icon-btn hidden" aria-label="Volver a Calcular" title="Volver">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="15 18 9 12 15 6"></polyline>
-          </svg>
-        </button>
         <div class="header-title-group">
           <h1 id="header-title">Calcular</h1>
           <span class="brand-badge">UPSJB</span>
@@ -393,6 +388,18 @@
 
         <div id="courses-list" class="courses-list">
           <!-- Populated dynamically -->
+        </div>
+
+        <div class="card-panel backup-panel">
+          <div class="toggle-text">
+            <h3>Respaldo de mis cursos</h3>
+            <p>Descarga tus cursos y notas en un archivo <strong>.json</strong> o restaura un respaldo anterior.</p>
+          </div>
+          <div class="backup-actions">
+            <button type="button" id="btn-export-backup" class="btn-secondary">Exportar .json</button>
+            <button type="button" id="btn-import-backup" class="btn-primary">Importar .json</button>
+            <input type="file" id="input-import-backup" class="hidden" accept=".json,application/json" aria-label="Importar archivo de respaldo JSON" />
+          </div>
         </div>
       </section>
     </main>

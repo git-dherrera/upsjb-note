@@ -798,6 +798,22 @@ body {
   gap: 14px;
 }
 
+.backup-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.backup-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.backup-actions button {
+  flex: 1;
+}
+
 .toggle-text h3 {
   font-size: 0.94rem;
   font-weight: 700;
