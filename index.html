@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>UPSJB Note — Calculadora de Notas</title>
+  <meta name="description" content="Calcula tu promedio, cuánto te falta para aprobar y si pasarás el ciclo." />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png" />
+  <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="UPSJB Note" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <!-- Top Red Status Accent -->
+    <div class="top-accent-bar"></div>
+
+    <!-- App Header -->
+    <header class="app-header">
+      <div class="header-left">
+        <button type="button" id="btn-back" class="icon-btn hidden" aria-label="Volver a Calcular" title="Volver">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+        </button>
+        <div class="header-title-group">
+          <h1 id="header-title">Calcular</h1>
+          <span class="brand-badge">UPSJB</span>
+        </div>
+      </div>
+
+      <nav class="header-actions" aria-label="Navegación principal">
+        <button type="button" id="nav-calculate" class="icon-btn active" title="Calcular notas" aria-label="Calcular notas">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="4" y="2" width="16" height="20" rx="2.5"></rect>
+            <line x1="8" y1="6" x2="16" y2="6"></line>
+            <line x1="8" y1="10" x2="8.01" y2="10"></line>
+            <line x1="12" y1="10" x2="12.01" y2="10"></line>
+            <line x1="16" y1="10" x2="16.01" y2="10"></line>
+            <line x1="8" y1="14" x2="8.01" y2="14"></line>
+            <line x1="12" y1="14" x2="12.01" y2="14"></line>
+            <line x1="16" y1="14" x2="16.01" y2="14"></line>
+            <line x1="8" y1="18" x2="8.01" y2="18"></line>
+            <line x1="12" y1="18" x2="16" y2="18"></line>
+          </svg>
+        </button>
+        <button type="button" id="nav-settings" class="icon-btn" title="Ajustes de porcentajes" aria-label="Ajustes de porcentajes">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="19" y1="5" x2="5" y2="19"></line>
+            <circle cx="6.5" cy="6.5" r="2.5"></circle>
+            <circle cx="17.5" cy="17.5" r="2.5"></circle>
+          </svg>
+        </button>
+        <button type="button" id="nav-summary" class="icon-btn" title="Mis cursos y resumen" aria-label="Mis cursos y resumen">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="20" x2="18" y2="10"></line>
+            <line x1="12" y1="20" x2="12" y2="4"></line>
+            <line x1="6" y1="20" x2="6" y2="14"></line>
+            <line x1="3" y1="20" x2="21" y2="20"></line>
+          </svg>
+        </button>
+        <button type="button" id="nav-info" class="icon-btn" title="Fórmula y ayuda" aria-label="Fórmula y ayuda">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="16" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+          </svg>
+        </button>
+      </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main class="app-main">
+      <!-- VIEW 1: CALCULAR -->
+      <section id="view-calculate" class="view active" aria-labelledby="header-title">
+        <div class="meta-banner">
+          <p class="meta-line">
+            Configuración actual de nota mínima: <strong id="lbl-min-grade">11.00</strong>
+          </p>
+          <div class="course-selector-row">
+            <span>Notas para curso:</span>
+            <button type="button" id="btn-open-courses" class="course-pill" title="Cambiar o agregar curso">
+              <span class="dot">•</span>
+              <span id="lbl-current-course">General</span>
+              <span class="dot">•</span>
+              <svg class="chevron-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="calculator-layout">
+          <!-- Left Column: Grade Inputs -->
+          <div class="grades-column" id="grades-list">
+            <!-- PC1 -->
+            <div class="grade-row" data-key="pc1">
+              <div class="floating-input-box">
+                <label for="input-pc1">PC1</label>
+                <input id="input-pc1" type="number" min="0" max="20" step="0.01" placeholder="—" inputmode="decimal" />
+                <button type="button" class="subgrade-btn" data-pc="pc1" title="Promediar sub-notas de PC1" aria-label="Promediar sub-notas de PC1">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 7h7"></path>
+                    <path d="M3 12h7"></path>
+                    <path d="M3 17h7"></path>
+                    <polyline points="14 8 16.5 10.5 21 6"></polyline>
+                    <polyline points="14 16 16.5 18.5 21 14"></polyline>
+                  </svg>
+                </button>
+              </div>
+              <div class="weight-meta">
+                <span class="weight-tag" id="weight-pc1">15%</span>
+                <span class="points-tag empty" id="points-pc1" title="Aporte en puntos al promedio final">(—)</span>
+              </div>
+            </div>
+
+            <!-- PC2 -->
+            <div class="grade-row" data-key="pc2">
+              <div class="floating-input-box">
+                <label for="input-pc2">PC2</label>
+                <input id="input-pc2" type="number" min="0" max="20" step="0.01" placeholder="—" inputmode="decimal" />
+                <button type="button" class="subgrade-btn" data-pc="pc2" title="Promediar sub-notas de PC2" aria-label="Promediar sub-notas de PC2">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 7h7"></path>
+                    <path d="M3 12h7"></path>
+                    <path d="M3 17h7"></path>
+                    <polyline points="14 8 16.5 10.5 21 6"></polyline>
+                    <polyline points="14 16 16.5 18.5 21 14"></polyline>
+                  </svg>
+                </button>
+              </div>
+              <div class="weight-meta">
+                <span class="weight-tag" id="weight-pc2">15%</span>
+                <span class="points-tag empty" id="points-pc2" title="Aporte en puntos al promedio final">(—)</span>
+              </div>
+            </div>
+
+            <!-- PC3 -->
+            <div class="grade-row" data-key="pc3">
+              <div class="floating-input-box">
+                <label for="input-pc3">PC3</label>
+                <input id="input-pc3" type="number" min="0" max="20" step="0.01" placeholder="—" inputmode="decimal" />
+                <button type="button" class="subgrade-btn" data-pc="pc3" title="Promediar sub-notas de PC3" aria-label="Promediar sub-notas de PC3">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 7h7"></path>
+                    <path d="M3 12h7"></path>
+                    <path d="M3 17h7"></path>
+                    <polyline points="14 8 16.5 10.5 21 6"></polyline>
+                    <polyline points="14 16 16.5 18.5 21 14"></polyline>
+                  </svg>
+                </button>
+              </div>
+              <div class="weight-meta">
+                <span class="weight-tag" id="weight-pc3">15%</span>
+                <span class="points-tag empty" id="points-pc3" title="Aporte en puntos al promedio final">(—)</span>
+              </div>
+            </div>
+
+            <!-- PC4 -->
+            <div class="grade-row" data-key="pc4">
+              <div class="floating-input-box">
+                <label for="input-pc4">PC4</label>
+                <input id="input-pc4" type="number" min="0" max="20" step="0.01" placeholder="—" inputmode="decimal" />
+                <button type="button" class="subgrade-btn" data-pc="pc4" title="Promediar sub-notas de PC4" aria-label="Promediar sub-notas de PC4">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 7h7"></path>
+                    <path d="M3 12h7"></path>
+                    <path d="M3 17h7"></path>
+                    <polyline points="14 8 16.5 10.5 21 6"></polyline>
+                    <polyline points="14 16 16.5 18.5 21 14"></polyline>
+                  </svg>
+                </button>
+              </div>
+              <div class="weight-meta">
+                <span class="weight-tag" id="weight-pc4">15%</span>
+                <span class="points-tag empty" id="points-pc4" title="Aporte en puntos al promedio final">(—)</span>
+              </div>
+            </div>
+
+            <!-- Examen Parcial -->
+            <div class="grade-row" data-key="ep">
+              <div class="floating-input-box">
+                <label for="input-ep">Parcial</label>
+                <input id="input-ep" type="number" min="0" max="20" step="0.01" placeholder="—" inputmode="decimal" />
+              </div>
+              <div class="weight-meta">
+                <span class="weight-tag" id="weight-ep">20%</span>
+                <span class="points-tag empty" id="points-ep" title="Aporte en puntos al promedio final">(—)</span>
+              </div>
+            </div>
+
+            <!-- Examen Final -->
+            <div class="grade-row" data-key="ef">
+              <div class="floating-input-box">
+                <label for="input-ef">Examen Final</label>
+                <input id="input-ef" type="number" min="0" max="20" step="0.01" placeholder="—" inputmode="decimal" />
+              </div>
+              <div class="weight-meta">
+                <span class="weight-tag" id="weight-ef">20%</span>
+                <span class="points-tag empty" id="points-ef" title="Aporte en puntos al promedio final">(—)</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Column: Action Buttons -->
+          <div class="actions-column">
+            <button type="button" id="btn-new" class="btn-primary">Nuevo</button>
+            <button type="button" id="btn-generate" class="btn-primary" title="Calcula las notas mínimas necesarias en los campos vacíos">Generar</button>
+            <p class="actions-hint">
+              Usa <strong>Generar</strong> para calcular cuánto necesitas en las notas vacías.
+            </p>
+            <div class="save-actions-row">
+              <button type="button" id="btn-course-weights" class="course-weights-btn" title="Editar nombre y porcentajes del curso" aria-label="Editar nombre y porcentajes del curso">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                </svg>
+              </button>
+              <button type="button" id="btn-save-course" class="btn-success" title="Guarda estas notas con el nombre de un curso">Guardar</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Result Card -->
+        <div id="result-card" class="result-card state-neutral" aria-live="polite">
+          <div class="result-header">
+            <h2 id="result-title">Ingresa tus notas para evaluar</h2>
+            <p id="result-subtitle">Puedes dejar notas vacías y pulsar <strong>Generar</strong> para saber cuánto te falta.</p>
+          </div>
+
+          <div id="result-icon-wrap" class="result-icon-wrap">
+            <!-- Dynamic SVG Icon -->
+          </div>
+
+          <!-- Progress toward passing -->
+          <div class="progress-section" id="progress-section">
+            <div class="progress-track">
+              <div id="progress-fill" class="progress-fill"></div>
+              <div id="progress-marker" class="progress-marker" title="Nota mínima aprobatoria"></div>
+            </div>
+            <div class="progress-labels">
+              <span>0</span>
+              <span id="progress-min-label">Mín: 11.00</span>
+              <span>20</span>
+            </div>
+          </div>
+
+          <!-- Detailed Breakdown Pills -->
+          <div id="result-details" class="result-details hidden">
+            <div class="detail-chip">
+              <span class="detail-label">Acumulado</span>
+              <strong id="detail-accumulated">0.00 pts</strong>
+            </div>
+            <div class="detail-chip">
+              <span class="detail-label">Te falta</span>
+              <strong id="detail-missing">11.00 pts</strong>
+            </div>
+            <div class="detail-chip">
+              <span class="detail-label">Necesitas prom.</span>
+              <strong id="detail-needed-avg">—</strong>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW 2: AJUSTES -->
+      <section id="view-settings" class="view" aria-label="Ajustes de porcentajes">
+        <div class="card-panel">
+          <h2 class="panel-title">Personaliza los porcentajes de notas</h2>
+
+          <div class="settings-grid">
+            <div class="setting-field">
+              <span class="setting-caption">Práctica calificada 1</span>
+              <div class="floating-input-box compact">
+                <label for="set-pc1">PC1</label>
+                <span class="input-prefix">%</span>
+                <input id="set-pc1" type="number" min="0" max="100" step="1" />
+              </div>
+            </div>
+
+            <div class="setting-field">
+              <span class="setting-caption">Práctica calificada 2</span>
+              <div class="floating-input-box compact">
+                <label for="set-pc2">PC2</label>
+                <span class="input-prefix">%</span>
+                <input id="set-pc2" type="number" min="0" max="100" step="1" />
+              </div>
+            </div>
+
+            <div class="setting-field">
+              <span class="setting-caption">Práctica calificada 3</span>
+              <div class="floating-input-box compact">
+                <label for="set-pc3">PC3</label>
+                <span class="input-prefix">%</span>
+                <input id="set-pc3" type="number" min="0" max="100" step="1" />
+              </div>
+            </div>
+
+            <div class="setting-field">
+              <span class="setting-caption">Práctica calificada 4</span>
+              <div class="floating-input-box compact">
+                <label for="set-pc4">PC4</label>
+                <span class="input-prefix">%</span>
+                <input id="set-pc4" type="number" min="0" max="100" step="1" />
+              </div>
+            </div>
+
+            <div class="setting-field">
+              <span class="setting-caption">Examen Parcial</span>
+              <div class="floating-input-box compact">
+                <label for="set-ep">EP</label>
+                <span class="input-prefix">%</span>
+                <input id="set-ep" type="number" min="0" max="100" step="1" />
+              </div>
+            </div>
+
+            <div class="setting-field">
+              <span class="setting-caption">Examen Final</span>
+              <div class="floating-input-box compact">
+                <label for="set-ef">EF</label>
+                <span class="input-prefix">%</span>
+                <input id="set-ef" type="number" min="0" max="100" step="1" />
+              </div>
+            </div>
+          </div>
+
+          <div id="weight-sum-badge" class="weight-sum-badge valid">
+            Suma total: <strong id="weight-sum-value">100%</strong>
+          </div>
+
+          <div class="setting-field centered-field">
+            <span class="setting-caption">Promedio mínimo</span>
+            <div class="floating-input-box compact">
+              <label for="set-pm">PM</label>
+              <span class="input-prefix">★</span>
+              <input id="set-pm" type="number" min="0" max="20" step="0.01" />
+            </div>
+          </div>
+
+          <div class="settings-footer-actions">
+            <button type="button" id="btn-reset-defaults" class="btn-secondary">Restaurar UPSJB</button>
+            <button type="button" id="btn-save-settings" class="btn-primary">Guardar cambios</button>
+          </div>
+        </div>
+
+        <div class="card-panel toggle-panel">
+          <div class="toggle-text">
+            <h3>Guardado automático</h3>
+            <p>Todas las notas que ingrese en el módulo de Calcular se guardarán automáticamente.</p>
+          </div>
+          <label class="switch" for="toggle-autosave">
+            <input type="checkbox" id="toggle-autosave" aria-label="Activar guardado automático" checked />
+            <span class="slider"></span>
+          </label>
+        </div>
+      </section>
+
+      <!-- VIEW 3: RESUMEN DE CURSOS (¿Pasaré de año / ciclo?) -->
+      <section id="view-summary" class="view" aria-label="Resumen de cursos">
+        <div id="cycle-banner" class="cycle-banner">
+          <div class="cycle-stats">
+            <div class="cycle-stat">
+              <span class="stat-label">Promedio General</span>
+              <strong id="summary-gpa">0.00</strong>
+            </div>
+            <div class="cycle-stat">
+              <span class="stat-label">Aprobados</span>
+              <strong id="summary-passed" class="text-green">0</strong>
+            </div>
+            <div class="cycle-stat">
+              <span class="stat-label">En curso</span>
+              <strong id="summary-pending" class="text-amber">0</strong>
+            </div>
+            <div class="cycle-stat">
+              <span class="stat-label">En riesgo</span>
+              <strong id="summary-failed" class="text-red">0</strong>
+            </div>
+          </div>
+          <p id="cycle-verdict" class="cycle-verdict">Agrega tus cursos para evaluar si pasarás el ciclo o año.</p>
+        </div>
+
+        <div class="add-course-bar">
+          <input id="input-new-course" type="text" placeholder="Ej: Cálculo I, Programación..." maxlength="40" />
+          <button type="button" id="btn-add-course" class="btn-primary btn-sm">+ Curso</button>
+        </div>
+
+        <div id="courses-list" class="courses-list">
+          <!-- Populated dynamically -->
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- MODAL: SUB-GRADES CALCULATOR FOR PC1-PC4 -->
+  <div id="modal-subgrades" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="subgrades-title">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="subgrades-title">Calcular promedio de PC1</h3>
+        <button type="button" class="icon-btn-sm" data-close-modal="modal-subgrades" aria-label="Cerrar">✕</button>
+      </div>
+      <p class="modal-desc">Ingresa las notas parciales que componen esta Práctica Calificada y las promediaremos automáticamente.</p>
+      <div id="subgrades-inputs" class="subgrades-inputs"></div>
+      <button type="button" id="btn-add-subgrade" class="btn-link">+ Agregar otra nota</button>
+      <div class="subgrades-preview">
+        Promedio calculado: <strong id="subgrades-avg">0.00</strong>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" data-close-modal="modal-subgrades">Cancelar</button>
+        <button type="button" id="btn-apply-subgrades" class="btn-primary">Aplicar nota</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: SAVE COURSE -->
+  <div id="modal-save-course" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="save-course-title">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="save-course-title">Guardar curso</h3>
+        <button type="button" class="icon-btn-sm" data-close-modal="modal-save-course" aria-label="Cerrar">✕</button>
+      </div>
+      <p class="modal-desc">Ingresa el nombre del curso para guardarlo con tus notas actuales en <strong>Mis Cursos</strong>.</p>
+      <div class="modal-field">
+        <label for="input-save-course-name" class="modal-field-label">Nombre del curso</label>
+        <input id="input-save-course-name" class="modal-input" type="text" placeholder="Ej: Cálculo I, Programación..." maxlength="40" />
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" data-close-modal="modal-save-course">Cancelar</button>
+        <button type="button" id="btn-confirm-save-course" class="btn-primary">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: INDEPENDENT COURSE EDIT (NAME & WEIGHTS) -->
+  <div id="modal-course-weights" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="cw-title">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="cw-title">Editar curso</h3>
+        <button type="button" class="icon-btn-sm" data-close-modal="modal-course-weights" aria-label="Cerrar">✕</button>
+      </div>
+      <p class="modal-desc" id="cw-desc">Edita el nombre y los porcentajes de forma independiente solo para este curso. Pon <strong>0</strong> si alguna evaluación no aplica.</p>
+
+      <div id="cw-name-group" class="modal-field">
+        <label for="cw-course-name" class="modal-field-label">Nombre del curso</label>
+        <input id="cw-course-name" class="modal-input" type="text" placeholder="Ej: Cálculo I, Programación..." maxlength="40" />
+      </div>
+
+      <div class="settings-grid">
+        <div class="setting-field">
+          <span class="setting-caption">Práctica 1</span>
+          <div class="floating-input-box compact">
+            <label for="cw-pc1">PC1</label>
+            <span class="input-prefix">%</span>
+            <input id="cw-pc1" type="number" min="0" max="100" step="1" />
+          </div>
+        </div>
+        <div class="setting-field">
+          <span class="setting-caption">Práctica 2</span>
+          <div class="floating-input-box compact">
+            <label for="cw-pc2">PC2</label>
+            <span class="input-prefix">%</span>
+            <input id="cw-pc2" type="number" min="0" max="100" step="1" />
+          </div>
+        </div>
+        <div class="setting-field">
+          <span class="setting-caption">Práctica 3</span>
+          <div class="floating-input-box compact">
+            <label for="cw-pc3">PC3</label>
+            <span class="input-prefix">%</span>
+            <input id="cw-pc3" type="number" min="0" max="100" step="1" />
+          </div>
+        </div>
+        <div class="setting-field">
+          <span class="setting-caption">Práctica 4</span>
+          <div class="floating-input-box compact">
+            <label for="cw-pc4">PC4</label>
+            <span class="input-prefix">%</span>
+            <input id="cw-pc4" type="number" min="0" max="100" step="1" />
+          </div>
+        </div>
+        <div class="setting-field">
+          <span class="setting-caption">Examen Parcial</span>
+          <div class="floating-input-box compact">
+            <label for="cw-ep">EP</label>
+            <span class="input-prefix">%</span>
+            <input id="cw-ep" type="number" min="0" max="100" step="1" />
+          </div>
+        </div>
+        <div class="setting-field">
+          <span class="setting-caption">Examen Final</span>
+          <div class="floating-input-box compact">
+            <label for="cw-ef">EF</label>
+            <span class="input-prefix">%</span>
+            <input id="cw-ef" type="number" min="0" max="100" step="1" />
+          </div>
+        </div>
+      </div>
+
+      <div id="cw-sum-badge" class="weight-sum-badge valid">
+        Suma total: <strong id="cw-sum-value">100%</strong>
+      </div>
+
+      <div class="modal-actions cw-actions">
+        <button type="button" id="btn-reset-course-weights" class="btn-secondary">Usar global</button>
+        <button type="button" id="btn-save-course-weights" class="btn-primary">Aplicar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: FORMULA INFO -->
+  <div id="modal-info" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="info-title">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="info-title">Fórmula del Promedio Final (PF)</h3>
+        <button type="button" class="icon-btn-sm" data-close-modal="modal-info" aria-label="Cerrar">✕</button>
+      </div>
+      <p class="modal-desc">El promedio final de la asignatura se calcula de la siguiente forma:</p>
+      <div class="formula-box">
+        PF = EP (20%) + EF (20%) + PC1 (15%) + PC2 (15%) + PC3 (15%) + PC4 (15%)
+      </div>
+      <ul class="formula-legend">
+        <li><strong>EP</strong> = Examen Parcial</li>
+        <li><strong>EF</strong> = Examen Final</li>
+        <li><strong>PC</strong> = Práctica Calificada (PC1 a PC4)</li>
+      </ul>
+      <div class="info-tip">
+        <strong>Tip:</strong> Si aún no tienes todas tus notas, ingresa las que ya conoces y presiona <strong>Generar</strong> para ver la nota mínima que necesitas en las evaluaciones restantes para aprobar.
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-primary" data-close-modal="modal-info">Entendido</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST -->
+  <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
